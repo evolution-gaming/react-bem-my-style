@@ -1,0 +1,29 @@
+$element
+  border 1px solid grey
+  width 10em
+  margin .1em
+  padding .5em
+
+  button
+    margin .5em
+
+.example-block
+  font-family Arial
+
+  &__element1
+    @extend $element
+
+  &__element2
+    @extend $element
+
+    &--modifier1
+      color green
+
+  &__element3
+    @extend $element
+
+    &--modifier1
+      font-weight bold
+
+    &--modifier2
+      color red

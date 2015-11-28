@@ -55,8 +55,7 @@ const isElement = (value) => value === CHILD_TYPE_ELEMENT;
 const makeElementGenerator = (name, allModifiers) =>
     (...rest) => {
         if (rest.length > 0) {
-            const modifiers = rest[0];
-
+            const modifiers = Object.assign({}, ...rest);
             if (typeof modifiers !== "object") {
                 logError(`Object expected ${modifiers} received`);
             }
