@@ -3,6 +3,7 @@ gutil = require "gulp-util"
 cache = require "gulp-cached"
 changed = require "gulp-changed"
 rename = require "gulp-rename"
+serve = require "gulp-serve"
 stylus = require "gulp-stylus"
 
 babel = require "gulp-babel"
@@ -23,7 +24,7 @@ dest =
   stylus: "./examples/"
 
 gulp.task "build", ["babel", "stylus"]
-gulp.task "default", ["build", "watch"]
+gulp.task "default", ["build", "watch", "serve"]
 
 gulp.task "stylus", ->
   gulp.src src.stylus
@@ -73,3 +74,4 @@ gulp.task "watch", ["build"], ->
     runSequence "stylus"
   gutil.log "Watcher started"
 
+gulp.task "serve", serve "./"
