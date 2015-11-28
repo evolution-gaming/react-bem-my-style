@@ -1,0 +1,42 @@
+{
+  "name": "react-bem-my-style",
+  "version": "0.0.1",
+  "description": "Turns BEM definition into JSX-eatable object",
+  "main": "dist/index.js",
+  "homepage": "https://github.com/evolution-gaming/react-bem-my-style",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bugs": {
+    "url": "https://github.com/evolution-gaming/react-bem-my-style/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/evolution-gaming/react-bem-my-style.git"
+  },
+  "keywords": [
+    "react",
+    "css",
+    "bem"
+  ],
+  "author": "Jevgeni Geimanen",
+  "maintainers": [
+    {
+      "name": "jevgenig",
+      "email": "jgeimanen@evolutiongaming.com"
+    }
+  ],
+  "license": "BSD-3-Clause",
+  "devDependencies": {
+    "coffee-script": "^1.10.0",
+    "eslint": "^1.10.2",
+    "gulp": "^3.9.0",
+    "gulp-babel": "5.1.0",
+    "gulp-cached": "^1.1.0",
+    "gulp-notify": "^2.2.0",
+    "gulp-plumber": "^1.0.1",
+    "gulp-util": "^3.0.7",
+    "gulp-watch": "^4.3.5",
+    "run-sequence": "^1.1.5"
+  }
+}
