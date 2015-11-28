@@ -1,4 +1,4 @@
 node_modules
 .idea
 examples/**/*.js
-examples/**/*.js.map
+examples/**/*.css
