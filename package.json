@@ -35,8 +35,14 @@
     "gulp-cached": "^1.1.0",
     "gulp-notify": "^2.2.0",
     "gulp-plumber": "^1.0.1",
+    "gulp-rename": "^1.2.2",
+    "gulp-stylus": "^2.1.0",
     "gulp-util": "^3.0.7",
     "gulp-watch": "^4.3.5",
-    "run-sequence": "^1.1.5"
+    "react": "^0.14.3",
+    "react-dom": "^0.14.3",
+    "requirejs": "^2.1.22",
+    "run-sequence": "^1.1.5",
+    "stylus": "^0.52.4"
   }
 }

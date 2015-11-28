@@ -75,8 +75,7 @@ define(["exports", "module"], function (exports, module) {
 
             if (rest.length > 0) {
                 var _ret = (function () {
-                    var modifiers = rest[0];
-
+                    var modifiers = Object.assign.apply(Object, [{}].concat(rest));
                     if (typeof modifiers !== "object") {
                         logError("Object expected " + modifiers + " received");
                     }
