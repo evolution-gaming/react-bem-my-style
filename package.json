@@ -1,6 +1,6 @@
 {
   "name": "react-bem-my-style",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Turns BEM definition into JSX-eatable object",
   "main": "dist/index.js",
   "homepage": "https://github.com/evolution-gaming/react-bem-my-style",
