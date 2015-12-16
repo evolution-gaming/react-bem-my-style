@@ -2,18 +2,24 @@ define(["exports", "module"], function (exports, module) {
     /*global console */
     "use strict";
 
+    var _childTypeToModifier;
+
     function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
 
     function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
     var CHILD_TYPE_ELEMENT = 1;
     var CHILD_TYPE_MODIFIER = 2;
+    var CHILD_TYPE_REQUIRED_MODIFIER = 3;
     var MODIFIER_SEPARATOR = "--";
     var ELEMENT_SEPARATOR = "__";
+    var REQUIRED_MODIFIER_SEPARATOR = "---";
     var NAME_FIELD_NAME = "__name";
 
-    var getSeparator = function getSeparator(value) {
-        return isModifier(value) ? MODIFIER_SEPARATOR : ELEMENT_SEPARATOR;
+    var childTypeToModifier = (_childTypeToModifier = {}, _defineProperty(_childTypeToModifier, CHILD_TYPE_ELEMENT, ELEMENT_SEPARATOR), _defineProperty(_childTypeToModifier, CHILD_TYPE_MODIFIER, MODIFIER_SEPARATOR), _defineProperty(_childTypeToModifier, CHILD_TYPE_REQUIRED_MODIFIER, REQUIRED_MODIFIER_SEPARATOR), _childTypeToModifier);
+
+    var getElementSeparator = function getElementSeparator(element) {
+        return childTypeToModifier[element] || ELEMENT_SEPARATOR;
     };
 
     var logError = function logError(errorMsg) {
@@ -43,45 +49,61 @@ define(["exports", "module"], function (exports, module) {
     };
 
     /**
-     *
-     * @param {CHILD_TYPE_MODIFIER}  value
-     * @return {boolean}
-     */
-    var isModifier = function isModifier(value) {
-        return value === CHILD_TYPE_MODIFIER;
-    };
-
-    /**
-     *
-     * @param {CHILD_TYPE_ELEMENT}  value
-     * @return {boolean}
-     */
-    var isElement = function isElement(value) {
-        return value === CHILD_TYPE_ELEMENT;
-    };
-
-    /**
      * Returns Element BEM Generator function
      *
      * @param {string} name - name of the element
-     * @param {string[]} allModifiers - array of names of element's modifiers
+     * @param {string[]} optionalModifiers - array of names of element's optional modifiers
+     * @param {string[]} requiredModifiers - array of names of element's required modifiers
      * @return {Function}
      */
-    var makeElementGenerator = function makeElementGenerator(name, allModifiers) {
+    var makeElementGenerator = function makeElementGenerator(name, optionalModifiers, requiredModifiers) {
+        var nameDashed = camelCaseToDashed(name);
+        var wrappedClassName = wrapWithClassName(nameDashed);
+
+        //If element has no modifiers, return a simple generator function
+        if (optionalModifiers.length === 0 && requiredModifiers.length === 0) {
+            return function () {
+                return wrappedClassName;
+            };
+        }
+
+        //If element has no required modifiers, return generator with optional modifiers only
+        if (requiredModifiers.length === 0) {
+            return function () {
+                for (var _len = arguments.length, rest = Array(_len), _key = 0; _key < _len; _key++) {
+                    rest[_key] = arguments[_key];
+                }
+
+                return rest.length === 0 ? wrappedClassName : wrapWithClassName([nameDashed].concat(rest));
+            };
+        }
+        //Otherwise return complex generator
+        /**
+         * Expecting rest to be {String:Boolean}[]
+         */
         return function () {
-            for (var _len = arguments.length, rest = Array(_len), _key = 0; _key < _len; _key++) {
-                rest[_key] = arguments[_key];
+            for (var _len2 = arguments.length, rest = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+                rest[_key2] = arguments[_key2];
             }
 
-            if (rest.length > 0) {
+            if (rest.length === 0) {
+                logError(name + " is missing modifiers: " + requiredModifiers.join(","));
+            } else {
                 var _ret = (function () {
-                    var modifiers = Object.assign.apply(Object, [{}].concat(rest));
+                    var stringModifiers = rest.filter(function (modifier) {
+                        return typeof modifier === "string";
+                    });
+                    var objectModifiers = rest.filter(function (modifier) {
+                        return typeof modifier === "object";
+                    });
+                    //merging {String:Boolean}[] into single object
+                    var modifiers = Object.assign.apply(Object, [{}].concat(_toConsumableArray(objectModifiers)));
                     if (typeof modifiers !== "object") {
                         logError("Object expected " + modifiers + " received");
                     }
 
                     var keys = Object.keys(modifiers);
-                    var missingModifiers = allModifiers.filter(function (modifier) {
+                    var missingModifiers = requiredModifiers.filter(function (modifier) {
                         return keys.indexOf(modifier) === -1;
                     });
 
@@ -90,52 +112,67 @@ define(["exports", "module"], function (exports, module) {
                     }
 
                     return {
-                        v: wrapWithClassName([name].concat(_toConsumableArray(keys.filter(function (key) {
+                        v: wrapWithClassName([nameDashed].concat(stringModifiers).concat(keys.filter(function (key) {
                             return modifiers[key];
                         }).map(function (key) {
                             return modifiers[key];
-                        }))))
+                        })))
                     };
                 })();
 
                 if (typeof _ret === "object") return _ret.v;
-            } else if (allModifiers.length) {
-                logError(name + " is missing modifiers: " + allModifiers.join(","));
             }
-            return wrapWithClassName(camelCaseToDashed(name));
+            return wrappedClassName;
         };
     };
 
+    var reduceBlockChild = function reduceBlockChild(mem, name, childName, child) {
+        if (childName !== NAME_FIELD_NAME) {
+            (function () {
+                var fullName = "" + name + getElementSeparator(child) + camelCaseToDashed(childName);
+
+                switch (child) {
+                    case CHILD_TYPE_MODIFIER:
+                        mem[childName] = function (s) {
+                            return s === true && fullName;
+                        };
+                        break;
+                    case CHILD_TYPE_REQUIRED_MODIFIER:
+                        var requiredValueTrue = _defineProperty({}, childName, fullName);
+                        var requiredValueFalse = _defineProperty({}, childName, false);
+                        mem[childName] = function (s) {
+                            return s === true ? requiredValueTrue : requiredValueFalse;
+                        };
+                        break;
+                    case CHILD_TYPE_ELEMENT:
+                        var classNameWrapped = wrapWithClassName(fullName);
+                        mem[childName] = function () {
+                            return classNameWrapped;
+                        };
+                        break;
+                    default:
+                        if (typeof child === "object") {
+                            mem[childName] = makeBem(fullName, child);
+                        } else {
+                            logError("Unexpected value for " + name + "(" + childName + ":" + child + ")");
+                        }
+                        break;
+                }
+            })();
+        }
+        return mem;
+    };
     /**
      * Returns BEM Generator for Element and it's Child elements and modifiers
      *
+     * @param {function} element - element generator
      * @param {string} name - name of element
      * @param {{name:object}} block - child elements and modifiers of the element
-     * @param {string[]} allModifiers - array of names of element's modifiers
      * @return {Function}
      */
-    var makeElement = function makeElement(name, block, allModifiers) {
-        return Object.assign(makeElementGenerator(name, allModifiers), Object.keys(block).reduce(function (mem, childName) {
-            if (childName !== NAME_FIELD_NAME) {
-                (function () {
-                    var fullName = "" + name + getSeparator(block[childName]) + camelCaseToDashed(childName);
-
-                    if (isModifier(block[childName])) {
-                        mem[childName] = function (s) {
-                            return _defineProperty({}, childName, s === true && fullName);
-                        };
-                    } else if (isElement(block[childName])) {
-                        mem[childName] = function () {
-                            return wrapWithClassName(fullName);
-                        };
-                    } else if (typeof block[childName] === "object") {
-                        mem[childName] = makeBem(fullName, block[childName]);
-                    } else {
-                        logError("Unexpected value for " + name + "(" + childName + ":" + block[childName] + ")");
-                    }
-                })();
-            }
-            return mem;
+    var makeElement = function makeElement(element, name, block) {
+        return Object.assign(element, Object.keys(block).reduce(function (mem, childName) {
+            return reduceBlockChild(mem, name, childName, block[childName]);
         }, {}));
     };
 
@@ -146,9 +183,12 @@ define(["exports", "module"], function (exports, module) {
      * @param {{name:object}} block - child elements and modifiers of the element
      */
     var makeBem = function makeBem(name, block) {
-        return makeElement(name, block, Object.keys(block).filter(function (childName) {
+        var element = makeElementGenerator(name, Object.keys(block).filter(function (childName) {
             return block[childName] === CHILD_TYPE_MODIFIER;
+        }), Object.keys(block).filter(function (childName) {
+            return block[childName] === CHILD_TYPE_REQUIRED_MODIFIER;
         }));
+        return makeElement(element, name, block);
     };
 
     /**
